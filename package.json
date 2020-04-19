@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^1.7.2",
+    "canvas": "^2.6.1",
+    "face-api.js": "^0.22.2",
+    "native-node-utils": "^0.2.1",
+    "node-gyp": "^4.0.0"
+  }
+}

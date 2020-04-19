@@ -1,0 +1,16 @@
+node_modules
+project/target/active.json
+.idea
+.vscode
+.history
+dist
+*.iml
+*.iws
+*.ipr
+.settings/
+.classpath
+.project
+.DS_Store
+.env.local
+*.log
+/webpack.config.js

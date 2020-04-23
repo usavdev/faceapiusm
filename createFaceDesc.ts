@@ -9,6 +9,9 @@ const weightsPath = './weights'
 const superName = 'tanya'
 const impDir = `./${superName}`;
 
+const minRate = 40
+const originalPref = 'original'
+
 async function listDir() {
     try {
         return fsPromises.readdir(impDir);
@@ -17,7 +20,7 @@ async function listDir() {
     }
 }
 
-async function procesFiles(array) {
+async function processFiles(array, originalMatcher:faceapi.FaceMatcher = null) {
     await faceDetectionNet.loadFromDisk(weightsPath)
     await faceapi.nets.faceLandmark68Net.loadFromDisk(weightsPath)
     await faceapi.nets.faceRecognitionNet.loadFromDisk(weightsPath)
@@ -46,16 +49,25 @@ async function procesFiles(array) {
             const ctx = canvas2.getContext('2d')
             ctx.drawImage(img, -x, -y)
 
-            saveFile(`face_${i}_${j}.jpg`, canvas2.toBuffer('image/jpeg'))  
+            var procent = 0
+            if (originalMatcher) {
+                const bestMatch = originalMatcher.matchDescriptor(item.descriptor)
+                procent = +(bestMatch.distance * 100).toFixed(0)
+            }
+            procent = 100 - +procent
+
+            if (procent >= minRate) {
+                saveFile(`face_${procent}_${i}_${j}.jpg`, canvas2.toBuffer('image/jpeg'))              
+                descriptors.push(item.descriptor)
+            }
             
-            descriptors.push(item.descriptor)
        
         })
 
         console.log(`(${i}/${array.length}):${file}`)
     }
 
-    console.log('Done procesFiles!')
+    console.log('Done processFiles!')
 
     return descriptors
   }
@@ -63,19 +75,32 @@ async function procesFiles(array) {
 
 async function run() {
         
-  const files = await listDir()
-  const descriptors = await procesFiles(files)
+  const filesAll = await listDir()
+  const filesOriginals = filesAll.filter(file => file.startsWith(originalPref))
+  const filesLoaded =filesAll.filter(file => !file.startsWith(originalPref))
 
-  const labelDesc = new faceapi.LabeledFaceDescriptors(
+  const descriptorsOriginals = await processFiles(filesOriginals)
+
+  const labelDescOriginal = new faceapi.LabeledFaceDescriptors(
     superName,
-    descriptors
+    descriptorsOriginals
   )
+  const faceMatcherOriginal = new faceapi.FaceMatcher(labelDescOriginal)  
 
-  const faceMatcher = new faceapi.FaceMatcher(labelDesc)  
-  const faceMatcherJSON = JSON.stringify(faceMatcher.toJSON())
+  const descriptorsLoaded = await processFiles(filesLoaded,faceMatcherOriginal)
 
-  fs.writeFileSync(`${superName}.json`, faceMatcherJSON)
-       
+  const descriptorsTotal = descriptorsOriginals.concat(descriptorsLoaded)
+  console.log('descriptorsTotal size:',descriptorsTotal.length)
+  const labelDescTotal = new faceapi.LabeledFaceDescriptors(
+    superName,
+    descriptorsTotal
+  )
+  const faceMatcherTotal = new faceapi.FaceMatcher(labelDescTotal)    
+
+  const faceMatcherJSON = JSON.stringify(faceMatcherTotal.toJSON())
+  
+  fs.writeFileSync(`${superName}.json`, faceMatcherJSON) 
+  
 }
 
 run()

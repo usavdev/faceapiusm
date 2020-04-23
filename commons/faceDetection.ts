@@ -13,7 +13,7 @@ const scoreThreshold = 0.6
 */
 
 const inputSize = 640
-const scoreThreshold = 0.6
+const scoreThreshold = 0.61
 
 function getFaceDetectorOptions(net: faceapi.NeuralNetwork<any>) {
   return net === faceapi.nets.ssdMobilenetv1

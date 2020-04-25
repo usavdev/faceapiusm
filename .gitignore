@@ -13,4 +13,6 @@ dist
 .DS_Store
 .env.local
 *.log
+*.jpg
+*.txt
 /webpack.config.js
